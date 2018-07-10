@@ -14,13 +14,16 @@ namespace TestShopping.Models
         /// </summary>
         public int ShoppingListId { get; private set; }
 
-        public List<Product> Products { get; set; }
+        public int UserId { get; set; }
 
         public DateTime CreationDate {get;set;}
 
-        public ShoppingList()
+        public ShoppingList(int userId)
         {
+            UserId = userId;
             CreationDate = DateTime.Now;
         }
+
+        public ShoppingList() { }
     }
 }

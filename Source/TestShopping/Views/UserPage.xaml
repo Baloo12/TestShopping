@@ -23,7 +23,7 @@
             <Button Content="History" Style="{StaticResource MenuButtonStyle}" Command="{Binding OpenHistoryCommand}"/>
             <Button Content="Logout" Style="{StaticResource MenuButtonStyle}" Command="{Binding LogoutCommand}"/>
         </StackPanel>
-        
+
         <!--Current list-->
         <Grid Grid.Column="1" >
             <Grid.Style>
@@ -46,12 +46,12 @@
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="30,0">
                 <Label Content="Pruduct: " FontSize="18" FontWeight="Bold"/>
-                <TextBox Width="300" Margin="10,0" VerticalContentAlignment="Center" FontSize="16"/>
-                <Button Content="Add product" Width="100"/>
+                <TextBox Width="300" Margin="10,0" VerticalContentAlignment="Center" FontSize="16" Text="{Binding ProductTitle}"/>
+                <Button Content="Add product" Width="100" Command="{Binding AddProductCommand}"/>
             </StackPanel>
-            <ListBox Grid.Row="2" Margin="30,10"/>
-
-            <Button Grid.Row="3" HorizontalAlignment="Right" Content="Delete product" Margin="30,5" Width="100"/>
+            <ListBox Grid.Row="2" Margin="30,10" ItemsSource="{Binding CurrentList}" SelectedItem="{Binding SelectedProduct, Mode=TwoWay}" MouseDoubleClick="{Binding ChangeProductStateCommand}"/>
+            <Button Grid.Row="3" HorizontalAlignment="Left" Content="Create new shopping list" Margin="30,5" Width="150" Command="{Binding CreateNewListCommand}"/>
+            <Button Grid.Row="3" HorizontalAlignment="Right" Content="Delete product" Margin="30,5" Width="100" Command="{Binding DeleteProductCommand}"/>
 
         </Grid>
 
@@ -69,6 +69,18 @@
                     </Style.Triggers>
                 </Style>
             </Grid.Style>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Label Grid.Column="0" Grid.Row="0" Content="Old shopping lists" Margin="10,5"/>
+            <ListBox Grid.Column="0" Grid.Row="1" ItemsSource="{Binding HistoryLists}" SelectedItem="{Binding SelectedHistoryList, Mode=TwoWay}" Margin="10"/>
+            <Label Grid.Column="1" Grid.Row="0" Content="Products" Margin="0,5"/>
+            <ListBox Grid.Column="1" Grid.Row="1" ItemsSource="{Binding OldListProducts}" Margin="10"/>
         </Grid>
     </Grid>
 </UserControl>

@@ -16,10 +16,12 @@ namespace TestShopping.Models
 
         public string Title { get; set; }
         public bool Done { get; set; }
+        public int ShoppingListId { get; set; }
 
-        public Product(string title)
+        public Product(string title, int listId)
         {
             Title = title;
+            ShoppingListId = listId;
             Done = false;
         }
 

@@ -17,13 +17,9 @@ namespace TestShopping.Models
 
         public string Name { get; private set; }
 
-        public List<ShoppingList> ShoppingLists { get; set; }
-
         public User(string name)
         {
             Name = name;
-            ShoppingLists = new List<ShoppingList>();
-            ShoppingLists.Add(new ShoppingList());
         }
 
         public User() { }
