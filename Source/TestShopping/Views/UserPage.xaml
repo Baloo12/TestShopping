@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:TestShopping.Views"
+             xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              xmlns:prism="http://prismlibrary.com/"
              mc:Ignorable="d" 
              prism:ViewModelLocator.AutoWireViewModel="True"
@@ -29,7 +30,7 @@
             <Grid.Style>
                 <Style>
                     <Style.Setters>
-                        <Setter Property="Grid.Visibility" Value="Visible"></Setter>
+                        <Setter Property="Grid.Visibility" Value="Collapsed"></Setter>
                     </Style.Setters>
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding CurrentPage}" Value="CurrentListPage">
@@ -42,21 +43,51 @@
                 <RowDefinition Height="40"/>
                 <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="30"/>
                 <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="30,0">
                 <Label Content="Pruduct: " FontSize="18" FontWeight="Bold"/>
-                <TextBox Width="300" Margin="10,0" VerticalContentAlignment="Center" FontSize="16" Text="{Binding ProductTitle}"/>
+                <TextBox Width="300" Margin="10,0" VerticalContentAlignment="Center" FontSize="16" Text="{Binding ProductTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 <Button Content="Add product" Width="100" Command="{Binding AddProductCommand}"/>
             </StackPanel>
-            <ListBox Grid.Row="2" Margin="30,10" ItemsSource="{Binding CurrentList}" SelectedItem="{Binding SelectedProduct, Mode=TwoWay}" MouseDoubleClick="{Binding ChangeProductStateCommand}"/>
-            <Button Grid.Row="3" HorizontalAlignment="Left" Content="Create new shopping list" Margin="30,5" Width="150" Command="{Binding CreateNewListCommand}"/>
-            <Button Grid.Row="3" HorizontalAlignment="Right" Content="Delete product" Margin="30,5" Width="100" Command="{Binding DeleteProductCommand}"/>
+            <ListBox Grid.Row="2" Margin="30,10" ItemsSource="{Binding CurrentList}" SelectedItem="{Binding SelectedProduct}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="MouseDoubleClick">
+                        <i:InvokeCommandAction Command="{Binding ChangeProductStateCommand}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Title}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Setters>
+                                        <Setter Property="TextBlock.TextDecorations" Value="None"></Setter>
+                                    </Style.Setters>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Done}" Value="True">
+                                            <Setter Property="TextBlock.TextDecorations" Value="Strikethrough"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Done}" Value="False">
+                                            <Setter Property="TextBlock.TextDecorations" Value="None"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+
+            </ListBox>
+            <Label Grid.Row="3" Foreground="Gray" Margin="30,0" Content="* use double click on product to mark if it's bought or not"/>
+            <Button Grid.Row="4" HorizontalAlignment="Left" Content="Create new shopping list" Margin="30,5" Width="150" Command="{Binding CreateNewListCommand}"/>
+            <Button Grid.Row="4" HorizontalAlignment="Right" Content="Delete product" Margin="30,5" Width="100" Command="{Binding DeleteProductCommand}"/>
 
         </Grid>
 
         <!--History-->
-        <Grid Grid.Column="1" Background="Green" >
+        <Grid Grid.Column="1">
             <Grid.Style>
                 <Style>
                     <Style.Setters>
@@ -74,13 +105,38 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="30"/>
+                <RowDefinition Height="40"/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <Label Grid.Column="0" Grid.Row="0" Content="Old shopping lists" Margin="10,5"/>
-            <ListBox Grid.Column="0" Grid.Row="1" ItemsSource="{Binding HistoryLists}" SelectedItem="{Binding SelectedHistoryList, Mode=TwoWay}" Margin="10"/>
+            <ListBox Grid.Column="0" Grid.Row="1" ItemsSource="{Binding HistoryLists}" SelectedItem="{Binding SelectedHistoryList, Mode=TwoWay}" Margin="10">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Label Content="{Binding CreationDate}" ContentStringFormat="Shopping list from {0}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
             <Label Grid.Column="1" Grid.Row="0" Content="Products" Margin="0,5"/>
-            <ListBox Grid.Column="1" Grid.Row="1" ItemsSource="{Binding OldListProducts}" Margin="10"/>
+            <ListBox Grid.Column="1" Grid.Row="1" ItemsSource="{Binding OldListProducts}" Margin="10">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Title}">
+                            <TextBlock.Style>
+                                <Style>
+                                    <Style.Setters>
+                                        <Setter Property="TextBlock.TextDecorations" Value="None"></Setter>
+                                    </Style.Setters>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Done}" Value="True">
+                                            <Setter Property="TextBlock.TextDecorations" Value="Strikethrough"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </Grid>
     </Grid>
 </UserControl>

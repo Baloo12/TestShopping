@@ -18,6 +18,13 @@ namespace TestShopping.ViewModels
         private ShoppingList _currentShoppingList;
         private ActivePage _currentPage = ActivePage.CurrentListPage;
 
+        private ObservableCollection<BindableProduct> _currentList;
+        private ObservableCollection<ShoppingList> _historyLists;
+        private ObservableCollection<Product> _oldListProducts;
+        private string _productTitle;
+        private BindableProduct _selectedProduct;
+        private ShoppingList _selectedHistoryList;
+
         private IRegionManager _regionManager;
 
         public UserPageViewModel(IRegionManager regionManager)
@@ -30,9 +37,8 @@ namespace TestShopping.ViewModels
             AddProductCommand = new DelegateCommand(AddProduct, CanAddProduct);
             DeleteProductCommand = new DelegateCommand(DeleteProduct, CanDeleteProduct);
             ChangeProductStateCommand = new DelegateCommand(ChangeProductState, CanChangeProductState);
+            CreateNewListCommand = new DelegateCommand(CreateNewList, CanCreateNewList);
 
-            LoadCurrentList();
-            RefreshHistory();
         }
 
         public ActivePage CurrentPage
@@ -41,17 +47,55 @@ namespace TestShopping.ViewModels
             set { SetProperty(ref _currentPage, value); }
         }
 
-        public ObservableCollection<Product> CurrentList { get; set; }
+        public ObservableCollection<BindableProduct> CurrentList
+        {
+            get { return _currentList; }
+            set { SetProperty(ref _currentList, value); }
+        }
 
-        public ObservableCollection<ShoppingList> HistoryLists { get; set; }
+        public ObservableCollection<ShoppingList> HistoryLists
+        {
+            get { return _historyLists; }
+            set { SetProperty(ref _historyLists, value); }
+        }
 
-        public ObservableCollection<Product> OldListProducts { get; set; }
+        public ObservableCollection<Product> OldListProducts
+        {
+            get { return _oldListProducts; }
+            set { SetProperty(ref _oldListProducts, value); }
+        }
 
-        public string ProductTitle { get; set; }
+        public string ProductTitle
+        {
+            get { return _productTitle; }
+            set
+            {
+                SetProperty(ref _productTitle, value);
+                AddProductCommand.RaiseCanExecuteChanged();
+            }
+        }
 
-        public Product SelectedProduct { get; set; }
+        public BindableProduct SelectedProduct
+        {
+            get { return _selectedProduct; }
+            set
+            {
+                SetProperty(ref _selectedProduct, value);
+                DeleteProductCommand.RaiseCanExecuteChanged();
+                CreateNewListCommand.RaiseCanExecuteChanged();
+                ChangeProductStateCommand.RaiseCanExecuteChanged();
+            }
+        }
 
-        public ShoppingList SelectedHistoryList { get; set; }
+        public ShoppingList SelectedHistoryList
+        {
+            get { return _selectedHistoryList; }
+            set
+            {
+                SetProperty(ref _selectedHistoryList, value);
+                RefreshSelectedOldList();
+            }
+        }
 
         #region Commands
 
@@ -67,7 +111,7 @@ namespace TestShopping.ViewModels
 
         private void LoadCurrentList()
         {
-            CurrentList = new ObservableCollection<Product>();
+            CurrentList = new ObservableCollection<BindableProduct>();
             using (var db = new ShoppingContext())
             {
                 _currentShoppingList = db.ShoppingLists.Where(x => x.UserId == _currentUser.UserId).OrderByDescending(x => x.CreationDate).FirstOrDefault();
@@ -78,7 +122,10 @@ namespace TestShopping.ViewModels
                     db.SaveChanges();
                     return;
                 }
-                CurrentList = new ObservableCollection<Product>(db.Products.Where(x => x.ShoppingListId == _currentShoppingList.ShoppingListId));
+                var products = db.Products.Where(x => x.ShoppingListId == _currentShoppingList.ShoppingListId);
+                CurrentList = new ObservableCollection<BindableProduct>();
+                foreach (var product in products)
+                    CurrentList.Add(new BindableProduct(product));
             }
         }
 
@@ -105,21 +152,24 @@ namespace TestShopping.ViewModels
                 db.Products.Add(newProduct);
                 db.SaveChanges();
             }
+            CurrentList.Add(new BindableProduct(newProduct));
+            ProductTitle = "";
         }
 
         private bool CanAddProduct()
         {
-            return string.IsNullOrWhiteSpace(ProductTitle);
+            return !string.IsNullOrWhiteSpace(ProductTitle);
         }
 
         private void DeleteProduct()
         {
-            CurrentList.Remove(SelectedProduct);
             using (var db = new ShoppingContext())
             {
-                db.Products.Remove(SelectedProduct);
+                var productToRemove = db.Products.SingleOrDefault(x => x.ProductId == SelectedProduct.OriginalProduct.ProductId);
+                db.Products.Remove(productToRemove);
                 db.SaveChanges();
             }
+            CurrentList.Remove(SelectedProduct);
         }
 
         private bool CanDeleteProduct()
@@ -130,6 +180,15 @@ namespace TestShopping.ViewModels
         private void ChangeProductState()
         {
             SelectedProduct.Done = !SelectedProduct.Done;
+            using (var db = new ShoppingContext())
+            {
+                var productToChange = db.Products.SingleOrDefault(x => x.ProductId == SelectedProduct.OriginalProduct.ProductId);
+                if (productToChange != null)
+                {
+                    productToChange.Done = SelectedProduct.Done;
+                    db.SaveChanges();
+                }
+            }
         }
 
         private bool CanChangeProductState()
@@ -145,15 +204,31 @@ namespace TestShopping.ViewModels
                 db.ShoppingLists.Add(newList);
                 db.SaveChanges();
                 _currentShoppingList = newList;
+                CurrentList = new ObservableCollection<BindableProduct>();
             }
             RefreshHistory();
         }
 
+        private bool CanCreateNewList()
+        {
+            return CurrentList != null && CurrentList.Count > 0;
+        }
+
         private void RefreshHistory()
         {
-            using (var db =new ShoppingContext())
+            using (var db = new ShoppingContext())
             {
                 HistoryLists = new ObservableCollection<ShoppingList>(db.ShoppingLists.Where(x => x.UserId == _currentUser.UserId).OrderByDescending(x => x.CreationDate).Skip(1));
+            }
+        }
+
+        private void RefreshSelectedOldList()
+        {
+            if (SelectedHistoryList == null)
+                return;
+            using (var db = new ShoppingContext())
+            {
+                OldListProducts = new ObservableCollection<Product>(db.Products.Where(x => x.ShoppingListId == SelectedHistoryList.ShoppingListId));
             }
         }
 
@@ -172,6 +247,8 @@ namespace TestShopping.ViewModels
         {
             User user = (User)navigationContext.Parameters["User"];
             _currentUser = user;
+            LoadCurrentList();
+            RefreshHistory();
         }
         #endregion
     }
